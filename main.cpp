@@ -4,8 +4,9 @@
 
 namespace {
 void ProcessRowsInAvroFormat(
-    ::google::cloud::bigquery::storage::v1::AvroSchema const& schema,
-    ::google::cloud::bigquery::storage::v1::AvroRows const& rows) {
+    ::google::cloud::bigquery::storage::v1::ArrowSchema const& schema,
+    ::google::cloud::bigquery::storage::v1::ArrowRecordBatch const& rows) {
+    
 }
 }  // namespace
 
@@ -32,7 +33,7 @@ int main(int argc, char* argv[]) try {
       bigquery_storage::MakeBigQueryReadConnection());
   ::google::cloud::bigquery::storage::v1::ReadSession read_session;
   read_session.set_data_format(
-      google::cloud::bigquery::storage::v1::DataFormat::AVRO);
+      google::cloud::bigquery::storage::v1::DataFormat::ARROW);
   read_session.set_table(table_name);
   auto session =
       client.CreateReadSession(project_name, read_session, kMaxReadStreams);
@@ -46,7 +47,7 @@ int main(int argc, char* argv[]) try {
   for (auto const& row : read_rows) {
     if (row.ok()) {
       num_rows += row->row_count();
-      ProcessRowsInAvroFormat(session->avro_schema(), row->avro_rows());
+      ProcessRowsInAvroFormat(session->arrow_schema(), row->arrow_record_batch());
     }
   }
 
