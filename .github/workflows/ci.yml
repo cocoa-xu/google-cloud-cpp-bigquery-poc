@@ -41,20 +41,34 @@ jobs:
           cmake -S . -B build
           cmake --build build --config Release -j
 
-      - name: Test
+      - name: Test Prepare (Windows)
+        if: startsWith(matrix.job.runner, 'windows')
+        run: |
+          New-Item -ItemType Directory -Path "$Env:AppData\gcloud" -Force -ErrorAction SilentlyContinue
+
+      - name: Test (Windows)
         env:
           TEST_CREDENTIALS: ${{ secrets.TEST_CREDENTIALS }}
           TEST_PROJECT_ID: ${{ secrets.TEST_PROJECT_ID }}
           TEST_TABLE_NAME: ${{ secrets.TEST_TABLE_NAME }}
+        if: startsWith(matrix.job.runner, 'windows')
         shell: bash
+        run: |
+          export TEST_CREDENTIALS_PATH="${AppData}/gcloud/application_default_credentials.json"
+          echo "TEST_CREDENTIALS_PATH: $TEST_CREDENTIALS_PATH"
+          echo -n "$TEST_CREDENTIALS" | base64 --decode > $TEST_CREDENTIALS_PATH
+          chmod 600 $TEST_CREDENTIALS_PATH
+          ./build/Release/poc.exe "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
+
+      - name: Test (macOS and Linux)
+        env:
+          TEST_CREDENTIALS: ${{ secrets.TEST_CREDENTIALS }}
+          TEST_PROJECT_ID: ${{ secrets.TEST_PROJECT_ID }}
+          TEST_TABLE_NAME: ${{ secrets.TEST_TABLE_NAME }}
+        if: "!startsWith(matrix.job.runner, 'windows')"
         run: |
           export TEST_CREDENTIALS_PATH="${HOME}/.config/gcloud/application_default_credentials.json"
           mkdir -p "${HOME}/.config/gcloud"
           echo -n "$TEST_CREDENTIALS" | base64 --decode > $TEST_CREDENTIALS_PATH
           chmod 600 $TEST_CREDENTIALS_PATH
-
-          if [ "${{ matrix.job.name }}" = "x86_64-windows-msvc" ]; then
-            ./build/Release/poc.exe "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
-          else
-            ./build/poc "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
-          fi
+          ./build/poc "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
