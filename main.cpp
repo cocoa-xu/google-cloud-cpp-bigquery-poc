@@ -1,15 +1,16 @@
+#include "absl/log/initialize.h"
 #include "google/cloud/bigquery/storage/v1/bigquery_read_client.h"
 #include <iostream>
 
 namespace {
 void ProcessRowsInAvroFormat(
-    ::google::cloud::bigquery::storage::v1::AvroSchema const&,
-    ::google::cloud::bigquery::storage::v1::AvroRows const&) {
-  // Code to deserialize avro rows should be added here.
+    ::google::cloud::bigquery::storage::v1::AvroSchema const& schema,
+    ::google::cloud::bigquery::storage::v1::AvroRows const& rows) {
 }
 }  // namespace
 
 int main(int argc, char* argv[]) try {
+  absl::InitializeLog();
   if (argc != 3) {
     std::cerr << "Usage: " << argv[0] << " <project-id> <table-name>\n";
     return 1;

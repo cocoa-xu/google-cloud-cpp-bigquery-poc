@@ -1,0 +1,55 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - test-*
+      - macos-ci-*
+    paths-ignore:
+      - '**/*.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.job.name }}
+    runs-on: ${{ matrix.job.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - { runner: macos-12, name: x86_64-apple-darwin }
+          - { runner: macos-14, name: aarch64-apple-darwin }
+          - { runner: windows-2019, name: x86_64-windows-msvc }
+          - { runner: ubuntu-20.04, name: x86_64-linux-gnu }
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: startsWith(matrix.job.runner, 'windows')
+        with:
+          arch: x64
+
+      - name: Build
+        run: |
+          cmake -S . -B build
+          cmake --build build --config Release -j
+
+      - name: Test
+        env:
+          TEST_CREDENTIALS: ${{ secrets.TEST_CREDENTIALS }}
+          TEST_PROJECT_ID: ${{ secrets.TEST_PROJECT_ID }}
+          TEST_TABLE_NAME: ${{ secrets.TEST_TABLE_NAME }}
+        shell: bash
+        run: |
+          export TEST_CREDENTIALS_PATH="~/.config/gcloud/application_default_credentials.json"
+          mkdir -p $(dirname $TEST_CREDENTIALS_PATH)
+          echo -n "$TEST_CREDENTIALS" | base64 --decode -o $TEST_CREDENTIALS_PATH
+
+          ./build/poc "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"

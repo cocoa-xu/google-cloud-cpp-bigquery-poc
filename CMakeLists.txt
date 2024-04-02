@@ -106,8 +106,8 @@ if(NOT EXISTS "${PRECOMPILED_BIGQUERY_ARCHIVE}")
 endif()
 
 link_directories("${BIGQUERY_INSTALL_PREFIX}/lib")
+include_directories("${BIGQUERY_INSTALL_PREFIX}/include")
 add_executable(poc main.cpp)
-target_include_directories(poc PUBLIC "${BIGQUERY_INSTALL_PREFIX}/include")
 set(LIBRARIES
     absl_bad_any_cast_impl
     absl_bad_optional_access
@@ -294,7 +294,6 @@ if(UNIX)
         protoc
         resolv
         z
-        "-framework CoreFoundation"
     )
     if(APPLE)
         list(APPEND LIBRARIES "-framework CoreFoundation")
