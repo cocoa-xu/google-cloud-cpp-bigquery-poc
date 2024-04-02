@@ -8,7 +8,8 @@ void ProcessRowsInArrowFormat(
     ::google::cloud::bigquery::storage::v1::ArrowRecordBatch const& rows) {
   auto aschema = schema.serialized_schema();
   auto undecoded = rows.serialized_record_batch();
-
+  std::cout << "schema length: " << aschema.length() << "\n";
+  std::cout << "record_batch length: " << undecoded.length() << "\n";
 }
 }  // namespace
 
