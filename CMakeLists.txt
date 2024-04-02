@@ -81,7 +81,7 @@ if(NOT EXISTS "${PRECOMPILED_BIGQUERY_ARCHIVE}")
                 "${PRECOMPILED_BIGQUERY_URL}"
                 "${PRECOMPILED_BIGQUERY_TARBALL}"
                 INACTIVITY_TIMEOUT 300
-                SHOW_PROGRESS YES
+                SHOW_PROGRESS TRUE
                 EXPECTED_HASH SHA256=${PRECOMPILED_BIGQUERY_HASH}
             )
         else()
@@ -89,15 +89,24 @@ if(NOT EXISTS "${PRECOMPILED_BIGQUERY_ARCHIVE}")
                 "${PRECOMPILED_BIGQUERY_URL}"
                 "${PRECOMPILED_BIGQUERY_TARBALL}"
                 INACTIVITY_TIMEOUT 300
-                SHOW_PROGRESS YES
+                SHOW_PROGRESS TRUE
             )
         endif()
     endif()
 
-    execute_process(
-        COMMAND bash -c "mkdir -p ${BIGQUERY_INSTALL_PREFIX} && tar xzf ${PRECOMPILED_BIGQUERY_TARBALL} -C ${BIGQUERY_INSTALL_PREFIX}"
-        RESULT_VARIABLE STATUS
-    )
+    if(UNIX)
+        execute_process(
+            COMMAND bash -c "mkdir -p \"${BIGQUERY_INSTALL_PREFIX}\" && tar xzf \"${PRECOMPILED_BIGQUERY_TARBALL}\" -C \"${BIGQUERY_INSTALL_PREFIX}\""
+            RESULT_VARIABLE STATUS
+        )
+    elseif(WIN32)
+        execute_process(
+            COMMAND powershell -command "New-Item -ItemType Directory -Path \"${BIGQUERY_INSTALL_PREFIX}\" -Force -ErrorAction SilentlyContinue && tar xzf \"${PRECOMPILED_BIGQUERY_TARBALL}\" -C \"${BIGQUERY_INSTALL_PREFIX}\""
+            RESULT_VARIABLE STATUS
+        )
+    else()
+        message(FATAL "Unsupported operating system: ${CMAKE_SYSTEM_NAME}")
+    endif()
     if(STATUS STREQUAL "0")
         message(STATUS "Precompiled bigquery binaries extracted to ${BIGQUERY_INSTALL_PREFIX}")
     else()
@@ -105,7 +114,7 @@ if(NOT EXISTS "${PRECOMPILED_BIGQUERY_ARCHIVE}")
     endif()
 endif()
 
-link_directories("${BIGQUERY_INSTALL_PREFIX}/lib")
+link_directories("${BIGQUERY_INSTALL_PREFIX}/lib" "${BIGQUERY_INSTALL_PREFIX}/lib64")
 include_directories("${BIGQUERY_INSTALL_PREFIX}/include")
 add_executable(poc main.cpp)
 set(LIBRARIES
