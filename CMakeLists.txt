@@ -1,9 +1,113 @@
 cmake_minimum_required(VERSION 3.10...3.24)
 project(google-cloud-cpp-bigquery-poc CXX)
 
-link_directories("${BIGQUERY_INSTALL_DIR}/lib")
+if(NOT DEFINED CMAKE_BUILD_TYPE OR "${CMAKE_BUILD_TYPE}" STREQUAL "")
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
+
+if(NOT DEFINED BIGQUERY_INSTALL_PREFIX OR "${BIGQUERY_INSTALL_PREFIX}" STREQUAL "")
+    set(BIGQUERY_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install")
+endif()
+
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
+
+set(BIGQUERY_VERSION_WITH_HASH "2.22.0")
+set(BIGQUERY_HASH_X86_64_APPLE_DARWIN "5dec87b4829a3553927dada827144f11909c37deb2c3e8994d2944e739ac4b35")
+set(BIGQUERY_HASH_AARCH64_APPLE_DARWIN "fe8bcb8d0d712caa0f80a60720c9eef629d9f04e0f422a3a2f103b9eaa6b0f12")
+set(BIGQUERY_HASH_X86_64_LINUX_GNU "d842947d55e808320163f42a031056b6fb18381f41c14ed207f3a8268459f955")
+set(BIGQUERY_HASH_X86_64_WINDOWS_MSVC "c59b8116dd6df8bb04d324198eb4792911adc122966858d7f563db7175d999c3")
+
+if(NOT DEFINED BIGQUERY_VERSION OR "${BIGQUERY_VERSION}" STREQUAL "")
+    set(BIGQUERY_VERSION "${BIGQUERY_VERSION_WITH_HASH}")
+endif()
+set(PRECOMPILED_BIGQUERY_BASE_URL "https://github.com/cocoa-xu/google-cloud-cpp-bigquery/releases/download/v${BIGQUERY_VERSION}")
+
+if(UNIX)
+    if(APPLE)
+        if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+            set(PRECOMPILED_BIGQUERY_TARBALL_FILENAME "bigquery-${BIGQUERY_VERSION}-x86_64-apple-darwin.tar.gz")
+            if(BIGQUERY_VERSION STREQUAL BIGQUERY_VERSION_WITH_HASH)
+                set(PRECOMPILED_BIGQUERY_HASH "${BIGQUERY_HASH_X86_64_APPLE_DARWIN}")
+            endif()
+        elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+            set(PRECOMPILED_BIGQUERY_TARBALL_FILENAME "bigquery-${BIGQUERY_VERSION}-aarch64-apple-darwin.tar.gz")
+            if(BIGQUERY_VERSION STREQUAL BIGQUERY_VERSION_WITH_HASH)
+                set(PRECOMPILED_BIGQUERY_HASH "${BIGQUERY_HASH_AARCH64_APPLE_DARWIN}")
+            endif()
+        else()
+            message(FATAL "Unsupported CPU architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+        endif()
+    else()
+        if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+            set(PRECOMPILED_BIGQUERY_TARBALL_FILENAME "bigquery-${BIGQUERY_VERSION}-x86_64-linux-gnu.tar.gz")
+            if(BIGQUERY_VERSION STREQUAL BIGQUERY_VERSION_WITH_HASH)
+                set(PRECOMPILED_BIGQUERY_HASH "${BIGQUERY_HASH_X86_64_LINUX_GNU}")
+            endif()
+        else()
+            message(FATAL "Unsupported CPU architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+        endif()
+    endif()
+elseif(WIN32)
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+        set(PRECOMPILED_BIGQUERY_TARBALL_FILENAME "bigquery-${BIGQUERY_VERSION}-x86_64-windows-msvc.tar.gz")
+        if(BIGQUERY_VERSION STREQUAL BIGQUERY_VERSION_WITH_HASH)
+            set(PRECOMPILED_BIGQUERY_HASH "${BIGQUERY_HASH_X86_64_WINDOWS_MSVC}")
+        endif()
+    else()
+        message(FATAL "Unsupported CPU architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+    endif()
+else()
+    message(FATAL "Unsupported operating system: ${CMAKE_SYSTEM_NAME}")
+endif()
+set(PRECOMPILED_BIGQUERY_URL "${PRECOMPILED_BIGQUERY_BASE_URL}/${PRECOMPILED_BIGQUERY_TARBALL_FILENAME}")
+message(STATUS "Using precompiled bigquery binaries from ${PRECOMPILED_BIGQUERY_URL}")
+
+set(CACHE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cache")
+set(PRECOMPILED_BIGQUERY_TARBALL "${CACHE_DIR}/${PRECOMPILED_BIGQUERY_TARBALL_FILENAME}")
+if(UNIX)
+    set(PRECOMPILED_BIGQUERY_ARCHIVE "${CMAKE_INSTALL_PREFIX}/lib/libgoogle_cloud_cpp_bigquery.a")
+elseif(WIN32)
+    set(PRECOMPILED_BIGQUERY_ARCHIVE "${CMAKE_INSTALL_PREFIX}/lib/google_cloud_cpp_bigquery.lib")
+else()
+    message(FATAL "Unsupported operating system: ${CMAKE_SYSTEM_NAME}")
+endif()
+
+if(NOT EXISTS "${PRECOMPILED_BIGQUERY_ARCHIVE}")
+    if(NOT EXISTS "${PRECOMPILED_BIGQUERY_TARBALL}")
+        if(DEFINED PRECOMPILED_BIGQUERY_HASH)
+            file(DOWNLOAD 
+                "${PRECOMPILED_BIGQUERY_URL}"
+                "${PRECOMPILED_BIGQUERY_TARBALL}"
+                INACTIVITY_TIMEOUT 300
+                SHOW_PROGRESS YES
+                EXPECTED_HASH SHA256=${PRECOMPILED_BIGQUERY_HASH}
+            )
+        else()
+            file(DOWNLOAD 
+                "${PRECOMPILED_BIGQUERY_URL}"
+                "${PRECOMPILED_BIGQUERY_TARBALL}"
+                INACTIVITY_TIMEOUT 300
+                SHOW_PROGRESS YES
+            )
+        endif()
+    endif()
+
+    execute_process(
+        COMMAND bash -c "mkdir -p ${BIGQUERY_INSTALL_PREFIX} && tar xzf ${PRECOMPILED_BIGQUERY_TARBALL} -C ${BIGQUERY_INSTALL_PREFIX}"
+        RESULT_VARIABLE STATUS
+    )
+    if(STATUS STREQUAL "0")
+        message(STATUS "Precompiled bigquery binaries extracted to ${BIGQUERY_INSTALL_PREFIX}")
+    else()
+        message(FATAL_ERROR "Failed to extract bigquery binaries from ${PRECOMPILED_BIGQUERY_TARBALL} to ${BIGQUERY_INSTALL_PREFIX}")
+    endif()
+endif()
+
+link_directories("${BIGQUERY_INSTALL_PREFIX}/lib")
 add_executable(poc main.cpp)
-target_include_directories(poc PUBLIC "${BIGQUERY_INSTALL_DIR}/include")
+target_include_directories(poc PUBLIC "${BIGQUERY_INSTALL_PREFIX}/include")
 set(LIBRARIES
     absl_bad_any_cast_impl
     absl_bad_optional_access
@@ -206,7 +310,6 @@ elseif(WIN32)
     )
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 endif()
-target_link_libraries(poc PUBLIC
-    ${LIBRARIES}
-)
+
+target_link_libraries(poc PUBLIC ${LIBRARIES})
 install(TARGETS poc)
