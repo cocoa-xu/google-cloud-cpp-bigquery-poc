@@ -48,8 +48,9 @@ jobs:
           TEST_TABLE_NAME: ${{ secrets.TEST_TABLE_NAME }}
         shell: bash
         run: |
-          export TEST_CREDENTIALS_PATH="~/.config/gcloud/application_default_credentials.json"
-          mkdir -p $(dirname $TEST_CREDENTIALS_PATH)
+          export TEST_CREDENTIALS_PATH="${HOME}/.config/gcloud/application_default_credentials.json"
+          mkdir -p "${HOME}/.config/gcloud"
           echo -n "$TEST_CREDENTIALS" | base64 --decode -o $TEST_CREDENTIALS_PATH
+          chmod 600 $TEST_CREDENTIALS_PATH
 
           ./build/poc "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
