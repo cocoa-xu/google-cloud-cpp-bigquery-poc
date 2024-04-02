@@ -1,14 +1,10 @@
 cmake_minimum_required(VERSION 3.10...3.24)
 project(google-cloud-cpp-bigquery-poc CXX)
 
-if(WIN32)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
-
 link_directories("${BIGQUERY_INSTALL_DIR}/lib")
 add_executable(poc main.cpp)
 target_include_directories(poc PUBLIC "${BIGQUERY_INSTALL_DIR}/include")
-set(LIBRARIES 
+set(LIBRARIES
     absl_bad_any_cast_impl
     absl_bad_optional_access
     absl_bad_variant_access
@@ -176,9 +172,6 @@ set(LIBRARIES
     grpc_plugin_support
     grpc_unsecure
     grpcpp_channelz
-    protobuf
-    protobuf-lite
-    protoc
     re2
     ssl
     upb_base_lib
@@ -189,12 +182,29 @@ set(LIBRARIES
     utf8_range
     utf8_range_lib
     utf8_validity
-    z
-    resolv
 )
-if(UNIX AND APPLE)
-    list(APPEND LIBRARIES "-framework CoreFoundation")
-    set_target_properties(poc PROPERTIES LINK_FLAGS "-Wl,-F/Library/Frameworks")
+if(UNIX)
+    list(APPEND LIBRARIES 
+        protobuf
+        protobuf-lite
+        protoc
+        resolv
+        z
+        "-framework CoreFoundation"
+    )
+    if(APPLE)
+        list(APPEND LIBRARIES "-framework CoreFoundation")
+        set_target_properties(poc PROPERTIES LINK_FLAGS "-Wl,-F/Library/Frameworks")
+    endif()
+elseif(WIN32)
+    list(APPEND LIBRARIES 
+        libprotobuf
+        libprotobuf-lite
+        libprotoc
+        zlibstatic
+        ucrtd
+    )
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 endif()
 target_link_libraries(poc PUBLIC
     ${LIBRARIES}
