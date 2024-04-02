@@ -3,10 +3,12 @@
 #include <iostream>
 
 namespace {
-void ProcessRowsInAvroFormat(
+void ProcessRowsInArrowFormat(
     ::google::cloud::bigquery::storage::v1::ArrowSchema const& schema,
     ::google::cloud::bigquery::storage::v1::ArrowRecordBatch const& rows) {
-    
+  auto aschema = schema.serialized_schema();
+  auto undecoded = rows.serialized_record_batch();
+
 }
 }  // namespace
 
@@ -47,7 +49,7 @@ int main(int argc, char* argv[]) try {
   for (auto const& row : read_rows) {
     if (row.ok()) {
       num_rows += row->row_count();
-      ProcessRowsInAvroFormat(session->arrow_schema(), row->arrow_record_batch());
+      ProcessRowsInArrowFormat(session->arrow_schema(), row->arrow_record_batch());
     }
   }
 
