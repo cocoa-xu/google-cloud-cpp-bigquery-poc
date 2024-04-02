@@ -53,4 +53,8 @@ jobs:
           echo -n "$TEST_CREDENTIALS" | base64 --decode > $TEST_CREDENTIALS_PATH
           chmod 600 $TEST_CREDENTIALS_PATH
 
-          ./build/poc "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
+          if [ "${{ matrix.job.name }}" = "x86_64-windows-msvc" ]; then
+            ./build/Release/poc.exe "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
+          else
+            ./build/poc "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
+          fi
