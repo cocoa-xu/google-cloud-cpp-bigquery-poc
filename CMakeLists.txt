@@ -318,6 +318,6 @@ elseif(WIN32)
     )
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 endif()
-
+set_property(TARGET poc PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(poc PUBLIC ${LIBRARIES})
 install(TARGETS poc)
