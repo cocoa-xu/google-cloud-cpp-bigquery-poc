@@ -101,7 +101,7 @@ if(NOT EXISTS "${PRECOMPILED_BIGQUERY_ARCHIVE}")
         )
     elseif(WIN32)
         execute_process(
-            COMMAND powershell -command "New-Item -ItemType Directory -Path \"${BIGQUERY_INSTALL_PREFIX}\" -Force -ErrorAction SilentlyContinue && tar xzf \"${PRECOMPILED_BIGQUERY_TARBALL}\" -C \"${BIGQUERY_INSTALL_PREFIX}\""
+            COMMAND powershell -command "(New-Item -ItemType Directory -Path \"${BIGQUERY_INSTALL_PREFIX}\" -Force -ErrorAction SilentlyContinue) -and (tar xzf \"${PRECOMPILED_BIGQUERY_TARBALL}\" -C \"${BIGQUERY_INSTALL_PREFIX}\")"
             RESULT_VARIABLE STATUS
         )
     else()
