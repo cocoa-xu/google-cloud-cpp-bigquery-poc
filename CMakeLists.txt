@@ -85,7 +85,7 @@ if(NOT EXISTS "${PRECOMPILED_BIGQUERY_ARCHIVE}")
     if(NOT EXISTS "${PRECOMPILED_BIGQUERY_TARBALL}")
         message(STATUS "Using precompiled bigquery binaries from ${PRECOMPILED_BIGQUERY_URL}")
         if(DEFINED PRECOMPILED_BIGQUERY_HASH)
-            file(DOWNLOAD 
+            file(DOWNLOAD
                 "${PRECOMPILED_BIGQUERY_URL}"
                 "${PRECOMPILED_BIGQUERY_TARBALL}"
                 INACTIVITY_TIMEOUT 300
@@ -93,7 +93,7 @@ if(NOT EXISTS "${PRECOMPILED_BIGQUERY_ARCHIVE}")
                 EXPECTED_HASH SHA256=${PRECOMPILED_BIGQUERY_HASH}
             )
         else()
-            file(DOWNLOAD 
+            file(DOWNLOAD
                 "${PRECOMPILED_BIGQUERY_URL}"
                 "${PRECOMPILED_BIGQUERY_TARBALL}"
                 INACTIVITY_TIMEOUT 300
@@ -305,7 +305,7 @@ set(LIBRARIES
     utf8_validity
 )
 if(UNIX)
-    list(APPEND LIBRARIES 
+    list(APPEND LIBRARIES
         protobuf
         protobuf-lite
         protoc
@@ -316,10 +316,10 @@ if(UNIX)
         list(APPEND LIBRARIES "-framework CoreFoundation")
         set_target_properties(poc PROPERTIES LINK_FLAGS "-Wl,-F/Library/Frameworks")
     else()
-        link_directories("${BIGQUERY_INSTALL_PREFIX}/lib64")
+        link_directories("${BIGQUERY_INSTALL_PREFIX}/lib" "${BIGQUERY_INSTALL_PREFIX}/lib64")
     endif()
 elseif(WIN32)
-    list(APPEND LIBRARIES 
+    list(APPEND LIBRARIES
         libprotobuf
         libprotobuf-lite
         libprotoc
