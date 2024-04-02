@@ -124,7 +124,6 @@ endif()
 
 link_directories("${BIGQUERY_INSTALL_PREFIX}/lib")
 include_directories("${BIGQUERY_INSTALL_PREFIX}/include")
-add_executable(poc main.cpp)
 set(LIBRARIES
     absl_bad_any_cast_impl
     absl_bad_optional_access
@@ -314,7 +313,6 @@ if(UNIX)
     )
     if(APPLE)
         list(APPEND LIBRARIES "-framework CoreFoundation")
-        set_target_properties(poc PROPERTIES LINK_FLAGS "-Wl,-F/Library/Frameworks")
     else()
         link_directories("${BIGQUERY_INSTALL_PREFIX}/lib" "${BIGQUERY_INSTALL_PREFIX}/lib64")
     endif()
@@ -327,6 +325,10 @@ elseif(WIN32)
         ucrtd
     )
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+endif()
+add_executable(poc main.cpp)
+if(UNIX AND APPLE)
+    set_target_properties(poc PROPERTIES LINK_FLAGS "-Wl,-F/Library/Frameworks")
 endif()
 set_property(TARGET poc PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(poc PUBLIC ${LIBRARIES})
