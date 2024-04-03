@@ -118,7 +118,7 @@ if(NOT EXISTS "${PRECOMPILED_BIGQUERY_ARCHIVE}")
     if(STATUS STREQUAL "0")
         message(STATUS "Precompiled bigquery binaries extracted to ${BIGQUERY_INSTALL_PREFIX}")
     else()
-        message(FATAL_ERROR_ERROR "Failed to extract bigquery binaries from ${PRECOMPILED_BIGQUERY_TARBALL} to ${BIGQUERY_INSTALL_PREFIX}")
+        message(FATAL_ERROR "Failed to extract bigquery binaries from ${PRECOMPILED_BIGQUERY_TARBALL} to ${BIGQUERY_INSTALL_PREFIX}")
     endif()
 endif()
 
