@@ -160,11 +160,13 @@ FetchContent_Declare(
 FetchContent_GetProperties(flatbuffers)
 if(NOT flatbuffers_POPULATED)
   FetchContent_Populate(flatbuffers)
-  set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "")
-  set(FLATBUFFERS_INSTALL OFF CACHE BOOL "")
-  set(FLATBUFFERS_BUILD_FLATLIB OFF CACHE BOOL "")
-  add_subdirectory(${flatbuffers_SOURCE_DIR} ${flatbuffers_BINARY_DIR})
 endif()
+set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "")
+set(FLATBUFFERS_INSTALL OFF CACHE BOOL "")
+set(FLATBUFFERS_BUILD_FLATLIB OFF CACHE BOOL "")
+set(FLATBUFFERS_BUILD_CPP17 ON CACHE BOOL "")
+add_subdirectory(${flatbuffers_SOURCE_DIR} ${flatbuffers_BINARY_DIR})
+FetchContent_MakeAvailable(flatbuffers)
 
 if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include/arrow)
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/arrow)
@@ -196,10 +198,9 @@ function(flatc_generate_header_files fbs_filenames fbs_sha256_checksums)
             set(FLATC_EXECUTABLE ${flatbuffers_BINARY_DIR}/flatc)
         endif()
         add_custom_target(
-            flatc_generate_${fbs}
+            flatc_generate_${fbs} ${FLATC_EXECUTABLE} --no-warnings --cpp --cpp-std c++17 ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs
             BYPRODUCTS ${CMAKE_CURRENT_LIST_DIR}/include/arrow/${fbs}_generated.h
-            COMMAND ${FLATC_EXECUTABLE} --no-warnings --cpp --cpp-std c++17 ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs
-            DEPENDS ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs
+            DEPENDS flatc ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs
             WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/arrow
         )
     endforeach()
