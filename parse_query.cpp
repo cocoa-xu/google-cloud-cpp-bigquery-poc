@@ -171,28 +171,13 @@ void * parse_encapsulated_message(uintptr_t * data_ptr, org::apache::arrow::flat
 
             struct ArrowArray * out = (struct ArrowArray *)malloc(sizeof(struct ArrowArray));
             memset(out, 0, sizeof(struct ArrowArray));
-            // array->length = 0;
-            // array->null_count = 0;
-            // array->offset = 0;
-            // array->n_buffers = 0;
-            // array->n_children = 0;
-            // array->buffers = NULL;
-            // array->children = NULL;
-            // array->dictionary = NULL;
+
             out->n_children = nodes->size();
             out->children = (struct ArrowArray **)malloc(sizeof(struct ArrowArray *) * out->n_children);
             for (size_t i = 0; i < nodes->size(); i++) {
                 out->children[i] = (struct ArrowArray *)malloc(sizeof(struct ArrowArray));
                 memset(out->children[i], 0, sizeof(struct ArrowArray));
             }
-            // out->n_buffers = 1;
-            // out->buffers = (const void **)malloc(sizeof(uint8_t *) * out->n_buffers);
-            
-            // printf("      buffer[%d]: ", buffer_index);
-            auto buffer = buffers->Get(buffer_index);
-            // printf("offset=%lld, length=%lld\n", buffer->offset(), buffer->length());
-            // out->buffers[0] = (const uint8_t *)(((uint64_t)(uint64_t*)body_data) + buffer->offset());
-            // buffer_index++;
 
             for (size_t i = 0; i < nodes->size(); i++) {
                 auto node = nodes->Get(i);
@@ -218,7 +203,7 @@ void * parse_encapsulated_message(uintptr_t * data_ptr, org::apache::arrow::flat
                 printf("      child->n_buffers: %lld\n", child->n_buffers);
 
                 printf("      buffer[%d]: ", buffer_index);
-                buffer = buffers->Get(buffer_index);
+                auto buffer = buffers->Get(buffer_index);
                 printf("offset=%lld, length=%lld\n", buffer->offset(), buffer->length());
                 child->buffers[0] = (const uint8_t *)(((uint64_t)(uint64_t*)body_data) + buffer->offset());
                 buffer_index++;

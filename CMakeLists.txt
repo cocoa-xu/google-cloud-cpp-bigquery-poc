@@ -170,31 +170,38 @@ if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include/arrow)
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/arrow)
 endif()
 
+if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/format)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/format)
+endif()
+
 function(flatc_generate_header_files fbs_filenames fbs_sha256_checksums)
     set(FLATC_GENERATED_TARGETS "")
     foreach(fbs checksum IN ZIP_LISTS fbs_filenames fbs_sha256_checksums)
-        if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include/arrow/${fbs}_generated.h)
-            set(LOCAL_FBS_FILENAME ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs)
-            if(NOT EXISTS "${LOCAL_FBS_FILENAME}")
-                set(ARROW_PROTOCOL_FILE_BASE_URL "https://raw.githubusercontent.com/apache/arrow/apache-arrow-15.0.2/format")
-                file(DOWNLOAD
-                    "${ARROW_PROTOCOL_FILE_BASE_URL}/${fbs}.fbs"
-                    "${LOCAL_FBS_FILENAME}"
-                    INACTIVITY_TIMEOUT 300
-                    SHOW_PROGRESS
-                    EXPECTED_HASH SHA256=${checksum}
-                )
-            endif()
-            list(APPEND FLATC_GENERATED_TARGETS "flatc_generate_${fbs}")
-            add_custom_target(
-                flatc_generate_${fbs}
-                ALL
-                BYPRODUCTS
-                ${CMAKE_CURRENT_LIST_DIR}/include/arrow/${fbs}_generated.h
-                COMMAND ${flatbuffers_BINARY_DIR}/flatc --cpp --cpp-std c++17 ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs
-                WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/arrow
+        set(LOCAL_FBS_FILENAME ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs)
+        if(NOT EXISTS "${LOCAL_FBS_FILENAME}")
+            set(ARROW_PROTOCOL_FILE_BASE_URL "https://raw.githubusercontent.com/apache/arrow/apache-arrow-15.0.2/format")
+            file(DOWNLOAD
+                "${ARROW_PROTOCOL_FILE_BASE_URL}/${fbs}.fbs"
+                "${LOCAL_FBS_FILENAME}"
+                INACTIVITY_TIMEOUT 300
+                SHOW_PROGRESS
+                EXPECTED_HASH SHA256=${checksum}
             )
         endif()
+
+        list(APPEND FLATC_GENERATED_TARGETS "flatc_generate_${fbs}")
+        if(WIN32)
+            set(FLATC_EXECUTABLE ${flatbuffers_BINARY_DIR}/flatc.exe)
+        else()
+            set(FLATC_EXECUTABLE ${flatbuffers_BINARY_DIR}/flatc)
+        endif()
+        add_custom_target(
+            flatc_generate_${fbs}
+            BYPRODUCTS ${CMAKE_CURRENT_LIST_DIR}/include/arrow/${fbs}_generated.h
+            COMMAND ${FLATC_EXECUTABLE} --no-warnings --cpp --cpp-std c++17 ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs
+            DEPENDS ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs
+            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/arrow
+        )
     endforeach()
     set(FLATC_GENERATED_TARGETS ${FLATC_GENERATED_TARGETS} PARENT_SCOPE)
 endfunction(flatc_generate_header_files)
@@ -209,7 +216,7 @@ list(APPEND FBS_FILE_SHA256_CHECKSUMS "34de85517cea535db69c5aeb7e486b331a31bb5a8
 list(APPEND FBS_FILE_SHA256_CHECKSUMS "4a340d4ed601fb1c3cb1d60c2bdb139bffa446c0f2c7d7e9fde5a28949075266")
 # Tensor.fbs
 list(APPEND FBS_FILE_SHA256_CHECKSUMS "0ea5297a55f8ad00b125a98314f616c2c6249351bdbfea8f429913255b2a07f7")
-flatc_generate_header_files("${FBS_FILES}" ${FBS_FILE_SHA256_CHECKSUMS})
+flatc_generate_header_files(${FBS_FILES} ${FBS_FILE_SHA256_CHECKSUMS})
 
 add_executable(dump_query dump_query.cpp)
 set_property(TARGET dump_query PROPERTY POSITION_INDEPENDENT_CODE ON)
