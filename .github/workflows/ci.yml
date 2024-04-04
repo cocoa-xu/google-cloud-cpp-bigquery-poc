@@ -58,7 +58,9 @@ jobs:
           echo "TEST_CREDENTIALS_PATH: $TEST_CREDENTIALS_PATH"
           echo -n "$TEST_CREDENTIALS" | base64 --decode > $TEST_CREDENTIALS_PATH
           chmod 600 $TEST_CREDENTIALS_PATH
-          ./build/Release/poc.exe "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
+
+          ./build/Release/dump_query.exe "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
+          ./build/Release/parse_query.exe
 
       - name: Test (macOS and Linux)
         env:
@@ -71,4 +73,6 @@ jobs:
           mkdir -p "${HOME}/.config/gcloud"
           echo -n "$TEST_CREDENTIALS" | base64 --decode > $TEST_CREDENTIALS_PATH
           chmod 600 $TEST_CREDENTIALS_PATH
-          ./build/poc "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
+          
+          ./build/dump_query "${TEST_PROJECT_ID}" "${TEST_TABLE_NAME}"
+          ./build/parse_query

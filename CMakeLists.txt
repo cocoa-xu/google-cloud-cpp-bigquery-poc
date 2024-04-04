@@ -126,7 +126,11 @@ set(CMAKE_PREFIX_PATH "${BIGQUERY_INSTALL_PREFIX};${BIGQUERY_INSTALL_PREFIX}/ope
 find_package(OpenSSL)
 find_package(google_cloud_cpp_bigquery REQUIRED PATHS "${BIGQUERY_INSTALL_PREFIX}")
 
-add_executable(poc main.cpp)
-set_property(TARGET poc PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(poc PUBLIC google-cloud-cpp::bigquery)
-install(TARGETS poc)
+add_executable(dump_query dump_query.cpp)
+set_property(TARGET dump_query PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(dump_query PUBLIC google-cloud-cpp::bigquery)
+install(TARGETS dump_query)
+
+add_executable(parse_query parse_query.cpp)
+set_property(TARGET parse_query PROPERTY POSITION_INDEPENDENT_CODE ON)
+install(TARGETS parse_query)
