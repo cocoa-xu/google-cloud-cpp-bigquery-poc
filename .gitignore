@@ -6,3 +6,4 @@ cache/
 .vscode/
 *.arrow
 query_info.txt
+.DS_Store
