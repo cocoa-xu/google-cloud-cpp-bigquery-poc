@@ -160,7 +160,56 @@ FetchContent_Declare(
 FetchContent_GetProperties(flatbuffers)
 if(NOT flatbuffers_POPULATED)
   FetchContent_Populate(flatbuffers)
+  set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "")
+  set(FLATBUFFERS_INSTALL OFF CACHE BOOL "")
+  set(FLATBUFFERS_BUILD_FLATLIB OFF CACHE BOOL "")
+  add_subdirectory(${flatbuffers_SOURCE_DIR} ${flatbuffers_BINARY_DIR})
 endif()
+
+if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include/arrow)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/arrow)
+endif()
+
+function(flatc_generate_header_files fbs_filenames fbs_sha256_checksums)
+    set(FLATC_GENERATED_TARGETS "")
+    foreach(fbs checksum IN ZIP_LISTS fbs_filenames fbs_sha256_checksums)
+        if(NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/include/arrow/${fbs}_generated.h)
+            set(LOCAL_FBS_FILENAME ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs)
+            if(NOT EXISTS "${LOCAL_FBS_FILENAME}")
+                set(ARROW_PROTOCOL_FILE_BASE_URL "https://raw.githubusercontent.com/apache/arrow/apache-arrow-15.0.2/format")
+                file(DOWNLOAD
+                    "${ARROW_PROTOCOL_FILE_BASE_URL}/${fbs}.fbs"
+                    "${LOCAL_FBS_FILENAME}"
+                    INACTIVITY_TIMEOUT 300
+                    SHOW_PROGRESS
+                    EXPECTED_HASH SHA256=${checksum}
+                )
+            endif()
+            list(APPEND FLATC_GENERATED_TARGETS "flatc_generate_${fbs}")
+            add_custom_target(
+                flatc_generate_${fbs}
+                ALL
+                BYPRODUCTS
+                ${CMAKE_CURRENT_LIST_DIR}/include/arrow/${fbs}_generated.h
+                COMMAND ${flatbuffers_BINARY_DIR}/flatc --cpp --cpp-std c++17 ${CMAKE_CURRENT_LIST_DIR}/format/${fbs}.fbs
+                WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/arrow
+            )
+        endif()
+    endforeach()
+    set(FLATC_GENERATED_TARGETS ${FLATC_GENERATED_TARGETS} PARENT_SCOPE)
+endfunction(flatc_generate_header_files)
+
+set(FBS_FILES "Message;Schema;SparseTensor;Tensor")
+set(FBS_FILE_SHA256_CHECKSUMS "")
+# Message.fbs
+list(APPEND FBS_FILE_SHA256_CHECKSUMS "32a1464cede1b90d1351faf65726d465d95fbf3a85bd96e2d7222ac979fe20e4")
+# Schema.fbs
+list(APPEND FBS_FILE_SHA256_CHECKSUMS "34de85517cea535db69c5aeb7e486b331a31bb5a8acf1433099430feab2570df")
+# SparseTensor.fbs
+list(APPEND FBS_FILE_SHA256_CHECKSUMS "4a340d4ed601fb1c3cb1d60c2bdb139bffa446c0f2c7d7e9fde5a28949075266")
+# Tensor.fbs
+list(APPEND FBS_FILE_SHA256_CHECKSUMS "0ea5297a55f8ad00b125a98314f616c2c6249351bdbfea8f429913255b2a07f7")
+flatc_generate_header_files("${FBS_FILES}" ${FBS_FILE_SHA256_CHECKSUMS})
 
 add_executable(dump_query dump_query.cpp)
 set_property(TARGET dump_query PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -171,6 +220,9 @@ add_executable(parse_query
     parse_query.cpp
     include/nanoarrow/nanoarrow.c
 )
+if(FLATC_GENERATED_TARGETS)
+    add_dependencies(parse_query ${FLATC_GENERATED_TARGETS})
+endif()
 set_property(TARGET parse_query PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(parse_query PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include" "${flatbuffers_SOURCE_DIR}/include")
 target_compile_definitions(parse_query PRIVATE "${ADBC_DRIVER_BIGQUERY_ENDIAN_DEF}")

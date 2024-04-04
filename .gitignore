@@ -7,3 +7,5 @@ cache/
 *.arrow
 query_info.txt
 .DS_Store
+format/
+include/arrow/*generated.h
