@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10...3.24)
-project(google-cloud-cpp-bigquery-poc CXX)
+project(google-cloud-cpp-bigquery-poc C CXX)
 
 if(NOT DEFINED CMAKE_BUILD_TYPE OR "${CMAKE_BUILD_TYPE}" STREQUAL "")
     set(CMAKE_BUILD_TYPE "Release")
@@ -151,13 +151,16 @@ else()
     add_compile_definitions("ADBC_DRIVER_BIGQUERY_ENDIAN=1")
 endif()
 
+
 add_executable(dump_query dump_query.cpp)
 set_property(TARGET dump_query PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(dump_query PUBLIC google-cloud-cpp::bigquery)
 install(TARGETS dump_query)
 
-add_executable(parse_query parse_query.cpp)
+add_executable(parse_query 
+    parse_query.cpp
+    include/nanoarrow/nanoarrow.c
+)
 set_property(TARGET parse_query PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(parse_query PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include")
-message(STATUS "include: ${CMAKE_CURRENT_LIST_DIR}/include")
 install(TARGETS parse_query)
