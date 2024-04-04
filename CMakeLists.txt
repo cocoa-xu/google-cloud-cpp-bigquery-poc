@@ -193,7 +193,7 @@ function(flatc_generate_header_files fbs_filenames fbs_sha256_checksums)
 
         list(APPEND FLATC_GENERATED_TARGETS "flatc_generate_${fbs}")
         if(WIN32)
-            set(FLATC_EXECUTABLE ${flatbuffers_BINARY_DIR}/flatc.exe)
+            set(FLATC_EXECUTABLE ${flatbuffers_BINARY_DIR}/${CMAKE_BUILD_TYPE}/flatc.exe)
         else()
             set(FLATC_EXECUTABLE ${flatbuffers_BINARY_DIR}/flatc)
         endif()
