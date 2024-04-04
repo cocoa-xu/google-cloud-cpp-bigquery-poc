@@ -146,11 +146,21 @@ endif()
 message(STATUS "ADBC_DRIVER_BIGQUERY_ENDIAN: ${ADBC_DRIVER_BIGQUERY_ENDIAN}")
 
 if(ADBC_DRIVER_BIGQUERY_ENDIAN STREQUAL "BIG_ENDIAN")
-    add_compile_definitions("ADBC_DRIVER_BIGQUERY_ENDIAN=0")
+    set(ADBC_DRIVER_BIGQUERY_ENDIAN_DEF "ADBC_DRIVER_BIGQUERY_ENDIAN=0")
 else()
-    add_compile_definitions("ADBC_DRIVER_BIGQUERY_ENDIAN=1")
+    set(ADBC_DRIVER_BIGQUERY_ENDIAN_DEF "ADBC_DRIVER_BIGQUERY_ENDIAN=1")
 endif()
 
+include(FetchContent)
+FetchContent_Declare(
+  flatbuffers
+  GIT_REPOSITORY https://github.com/google/flatbuffers.git
+  GIT_TAG        v24.3.25
+)
+FetchContent_GetProperties(flatbuffers)
+if(NOT flatbuffers_POPULATED)
+  FetchContent_Populate(flatbuffers)
+endif()
 
 add_executable(dump_query dump_query.cpp)
 set_property(TARGET dump_query PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -162,5 +172,6 @@ add_executable(parse_query
     include/nanoarrow/nanoarrow.c
 )
 set_property(TARGET parse_query PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(parse_query PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include")
+target_include_directories(parse_query PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include" "${flatbuffers_SOURCE_DIR}/include")
+target_compile_definitions(parse_query PRIVATE "${ADBC_DRIVER_BIGQUERY_ENDIAN_DEF}")
 install(TARGETS parse_query)
